@@ -1,0 +1,54 @@
+// Jenkinsfile of will exect same , as we 
+pipeline {
+    agent any
+    //stages {
+        //stage('Set Parameters') {
+            //steps {
+                //script {
+                    properties([
+                        parameters([
+                            // Active Choices Parameter
+                            [$class: 'ChoiceParameterDefinition', 
+                                name: 'env', 
+                                choices: ['dev-1', 'dev-2', 'dev-3'], 
+                                description: 'Select the environment'
+                            ],
+
+                            // Active Choices Reactive Parameter
+                            [$class: 'CascadeChoiceParameter', 
+                                name: 'branch', 
+                                choiceType: 'PT_SINGLE_SELECT', 
+                                referencedParameters: 'env',
+                                script: [
+                                    $class: 'GroovyScript', 
+                                    script: [
+                                        script: '''
+                                            if (env.equals("dev-1")) {
+                                                return ["A"]
+                                            } else if (env.equals("dev-2")) {
+                                                return ["B"]
+                                            } else if (env.equals("dev-3")) {
+                                                return ["C"]
+                                            }
+                                        ''', 
+                                        sandbox: true
+                                    ]
+                                ],
+                                description: 'Select branch based on environment'
+                            ]
+                        ])
+                    ])
+                
+            
+        
+
+        stage('Display Selection') {
+            steps {
+                script {
+                    echo "Selected Environment: ${env.env}"
+                    echo "Selected Branch: ${env.branch}"
+                }
+            }
+        }
+    
+}

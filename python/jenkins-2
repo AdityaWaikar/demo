@@ -1,0 +1,89 @@
+pipeline {
+    agent any
+
+    parameters {
+        // Active Choices Parameter - Target Environment
+        choice(name: 'TargetEnvironment', choices: ['10x-sadev', '10x'], description: 'Select target environment')
+
+        // Active Choices Reactive Parameters for Branches
+        dynamicChoice('Engine_Branch', 'TargetEnvironment', [
+            '10x-sadev': 'develop',
+            '10x': ''
+        ], 'Engine Branch')
+
+        dynamicChoice('State_Branch', 'TargetEnvironment', [
+            '10x-sadev': 'develop',
+            '10x': ''
+        ], 'State Branch')
+
+        dynamicChoice('Web_Branch', 'TargetEnvironment', [
+            '10x-sadev': 'develop',
+            '10x': ''
+        ], 'Web Branch')
+
+        // Active Choices Parameter - Project Selection
+        choice(name: 'TargetProjectToDeploy', choices: ['Engine', 'State', 'Web', 'ALL'], description: 'Select project to deploy')
+    }
+
+    stages {
+        stage('Build Engine') {
+            when {
+                expression { 
+                    return params.TargetProjectToDeploy == 'Engine' || params.TargetProjectToDeploy == 'ALL'
+                }
+            }
+            steps {
+                build job: 'Build-Engine-Poc', parameters: [
+                    string(name: 'BRANCH', value: params.Engine_Branch),
+                    string(name: 'TARGET_ENV', value: params.TargetEnvironment)
+                ]
+            }
+        }
+
+        stage('Build State') {
+            when {
+                expression { 
+                    return params.TargetProjectToDeploy == 'State' || params.TargetProjectToDeploy == 'ALL'
+                }
+            }
+            steps {
+                build job: 'Build-State-Poc', parameters: [
+                    string(name: 'BRANCH', value: params.State_Branch),
+                    string(name: 'TARGET_ENV', value: params.TargetEnvironment)
+                ]
+            }
+        }
+
+        stage('Build Web') {
+            when {
+                expression { 
+                    return params.TargetProjectToDeploy == 'Web' || params.TargetProjectToDeploy == 'ALL'
+                }
+            }
+            steps {
+                build job: 'Build-Web-Poc', parameters: [
+                    string(name: 'BRANCH', value: params.Web_Branch),
+                    string(name: 'TARGET_ENV', value: params.TargetEnvironment)
+                ]
+            }
+        }
+    }
+}
+
+// Function to create Active Choice Reactive Parameter
+def dynamicChoice(paramName, refParam, choicesMap, description) {
+    return [$class: 'CascadeChoiceParameter',
+        name: paramName,
+        choiceType: 'PT_SINGLE_SELECT',
+        referencedParameters: refParam,
+        script: [
+            $class: 'GroovyScript',
+            script: """
+                def env = ${refParam}
+                return choicesMap.containsKey(env) ? [choicesMap[env]] : [""]
+            """,
+            sandbox: true
+        ],
+        description: description
+    ]
+}

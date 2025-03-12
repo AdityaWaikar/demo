@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    
+    parameters {
+        choice(name: 'TargetEnvironment', choices: ['10x-sadev', '10x'], description: 'Select target environment')
+        
+        // Engine Branch parameter
+        string(name: 'Engine_Branch', defaultValue: '', description: 'Engine Branch')
+        
+        // State Branch parameter
+        string(name: 'State_Branch', defaultValue: '', description: 'State Branch')
+        
+        // Web Branch parameter
+        string(name: 'Web_Branch', defaultValue: '', description: 'Web Branch')
+        
+        choice(name: 'TargetProjectToDeploy', choices: ['Engine', 'State', 'Web', 'ALL'], description: 'Select project to deploy')
+    }
+    
+    stages {
+        // Set branch values based on environment
+        stage('Parameter Setup') {
+            steps {
+                script {
+                    if (params.TargetEnvironment == '10x-sadev') {
+                        env.Engine_Branch = 'develop'
+                        env.State_Branch = 'develop'
+                        env.Web_Branch = 'develop'
+                    }
+                }
+            }
+        }
+        
+        
+    }
+}
